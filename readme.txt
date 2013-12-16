@@ -56,3 +56,7 @@ The feature priority is like this:
 = Manual Installation =
 
 1. Upload the entire `/mu-extender` directory and the mu-extender.php file to the `/wp-content/mu-plugins/` directory.
+
+== TODO ==
+- Clear / view other deactivation events for an extension
+- create extension config file dummies for newly added extensions
