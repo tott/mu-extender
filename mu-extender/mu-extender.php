@@ -71,6 +71,7 @@ class MU_Extender {
 	private $plugin_root = NULL;
 
 	private $capability = 'install_plugins';
+	private $user_extensions = array();
 
 	public function __construct() {
 		add_action( 'admin_init', array( &$this, 'register_setting' ) );
@@ -121,8 +122,7 @@ class MU_Extender {
 		self::instance()->settings_page_name = sprintf( __( '%s Settings', self::instance()->plugin_prefix ), self::instance()->plugin_name );
 
 		if ( 1 == self::instance()->settings['enable'] ) {
-			add_action( 'muplugins_loaded', self::instance()->extension_loader(), 1 );
-			add_action( 'init', self::instance()->init_hook_enabled() );
+			self::instance()->init_hook_enabled();
 		}
 		self::instance()->init_hook_always();
 	}
@@ -132,7 +132,7 @@ class MU_Extender {
 	 */
 	public static function instance() {
 		if ( self::$__instance == NULL )
-			self::$__instance = new MU_Extender;
+			self::$__instance = new self();
 		return self::$__instance;
 	}
 
@@ -143,6 +143,8 @@ class MU_Extender {
 		add_action( 'admin_init', array( &$this, 'register_list' ) );
 		add_filter( 'wpext_extension_data_filter', array( &$this, 'inject_extension_data' ), 10, 2 );
 		add_action( 'plugins_loaded', array( &$this, 'action_handler' ) );
+		add_action( 'muplugins_loaded', array( &$this, 'extension_loader' ), 1 );
+		add_action( 'set_current_user', array( &$this, 'user_extension_loader' ) );
 	}
 
 	public function register_list() {
@@ -308,16 +310,17 @@ class MU_Extender {
 	 */
 	public function get_extensions() {
 
-		if ( 1==1 || ! $cache_plugins = wp_cache_get( 'extensions', $this->plugin_prefix . '_extensions' ) )
+		if ( ! $cache_plugins = wp_cache_get( 'extensions', $this->plugin_prefix . '_extensions' ) )
 			$cache_plugins = array();
 
-		if ( isset( $cache_plugins[ $plugin_folder ] ) )
-			return $cache_plugins[ $plugin_folder ];
+		$plugins_dir = @ opendir( $this->plugin_root );
+
+		if ( isset( $cache_plugins[ $plugins_dir ] ) )
+			return $cache_plugins[ $plugins_dir ];
 
 		$wp_plugins = array ();
 
 		// Files in extensions directory
-		$plugins_dir = @ opendir( $this->plugin_root );
 		$plugin_files = array();
 		if ( $plugins_dir ) {
 			while ( ( $file = readdir( $plugins_dir ) ) !== false ) {
@@ -359,7 +362,7 @@ class MU_Extender {
 
 		uasort( $wp_plugins, '_sort_uname_callback' );
 
-		$cache_plugins[ $plugin_folder ] = $wp_plugins;
+		$cache_plugins[ $plugins_dir ] = $wp_plugins;
 		wp_cache_set( 'extensions', $cache_plugins, $this->plugin_prefix . '_extensions' );
 
 		return $wp_plugins;
@@ -711,6 +714,24 @@ class MU_Extender {
 
 
 		foreach( $available_extensions as $extension_file => $extension_data ) {
+			// for these extension we need the user object so check them later.
+			if ( true === $this->extension_can( $extension_file, 'USER_DEACTIVATION' ) ) {
+				$this->user_extensions[$extension_file] = $extension_data;
+				continue;
+			}
+
+			if ( file_exists( dirname( "$this->plugin_root/$extension_file" ) . '/extension-conf.php' ) ) {
+				require_once( dirname( "$this->plugin_root/$extension_file" ) . '/extension-conf.php' );
+			}
+			if ( true === $this->is_extension_active( $extension_file ) ) {
+				// require the file
+				require_once( "$this->plugin_root/$extension_file" );
+			}
+		}
+	}
+
+	public function user_extension_loader() {
+		foreach( $this->user_extensions as $extension_file => $extension_data ) {
 			if ( file_exists( dirname( "$this->plugin_root/$extension_file" ) . '/extension-conf.php' ) ) {
 				require_once( dirname( "$this->plugin_root/$extension_file" ) . '/extension-conf.php' );
 			}
