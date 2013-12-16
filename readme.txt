@@ -25,6 +25,8 @@ Config files are in `configurations/`. The hierarchy of the inclusion is as foll
 
 Extensions that will be loaded need to be dropped in the `extensions/` folder and can have a config file that defines the supported features for this extension. The config file is called `extentions/<extension>/extension-conf.php`.
 
+Make sure that these extensions do not rely on `register_activation_hook()` or `register_deactivation_hook` as these methods will never be called.
+
 Each of the extensions can support the following features defined in WordPress README format.
 
 Here an example:
