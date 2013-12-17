@@ -157,6 +157,17 @@ class MU_Extender {
 	 */
 	public function init_hook_always() {
 		/**
+		 * Locale setup
+		 */
+		$locale = apply_filters( 'plugin_locale', get_locale(), $this->plugin_prefix );
+		load_textdomain( $this->plugin_prefix, WP_LANG_DIR . '/' . $this->plugin_prefix . '/' . $this->plugin_prefix . '-' . $locale . '.mo' );
+		load_plugin_textdomain( $this->plugin_prefix, false, dirname( plugin_basename( __FILE__ ) ) . '/languages/' );
+		add_action( 'wp_enqueue_scripts', array( &$this, 'load_scripts_and_styles' ) );
+		add_action( 'admin_enqueue_scripts', array( &$this, 'load_scripts_and_styles' ) );
+	}
+
+	public function load_scripts_and_styles() {
+		/**
 		 * If a css file for this plugin exists in ./css/wp-cron-control.css make sure it's included
 		 */
 		if ( file_exists( dirname( __FILE__ ) . "/css/" . $this->underscored_name . ".css" ) )
@@ -166,13 +177,6 @@ class MU_Extender {
 		 */
 		if ( file_exists( dirname( __FILE__ ) . "/js/" . $this->underscored_name . ".js" ) )
 			wp_enqueue_script( $this->dashed_name, plugins_url( "js/" . $this->underscored_name . ".js", __FILE__ ), array(), $this->js_version, true );
-
-		/**
-		 * Locale setup
-		 */
-		$locale = apply_filters( 'plugin_locale', get_locale(), $this->plugin_prefix );
-		load_textdomain( $this->plugin_prefix, WP_LANG_DIR . '/' . $this->plugin_prefix . '/' . $this->plugin_prefix . '-' . $locale . '.mo' );
-		load_plugin_textdomain( $this->plugin_prefix, false, dirname( plugin_basename( __FILE__ ) ) . '/languages/' );
 
 	}
 
@@ -315,8 +319,8 @@ class MU_Extender {
 
 		$plugins_dir = @ opendir( $this->plugin_root );
 
-		if ( isset( $cache_plugins[ $plugins_dir ] ) )
-			return $cache_plugins[ $plugins_dir ];
+		if ( isset( $cache_plugins[ $this->plugin_root ] ) )
+			return $cache_plugins[ $this->plugin_root ];
 
 		$wp_plugins = array ();
 
@@ -362,7 +366,7 @@ class MU_Extender {
 
 		uasort( $wp_plugins, '_sort_uname_callback' );
 
-		$cache_plugins[ $plugins_dir ] = $wp_plugins;
+		$cache_plugins[ $this->plugin_root ] = $wp_plugins;
 		wp_cache_set( 'extensions', $cache_plugins, $this->plugin_prefix . '_extensions' );
 
 		return $wp_plugins;

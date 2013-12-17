@@ -245,8 +245,8 @@ class WP_Extension_List_Table extends WP_List_Table {
 			} // end if $is_active
 		}
 
-		$actions = apply_filters( $prefix . 'extension_action_links', array_filter( $actions ), $extension_file, $extension_data, $context );
-		$actions = apply_filters( $prefix . "extension_action_links_$extension_file", $actions, $extension_file, $extension_data, $context );
+		$actions = apply_filters( 'extension_action_links', array_filter( $actions ), $extension_file, $extension_data, $context );
+		$actions = apply_filters( "extension_action_links_$extension_file", $actions, $extension_file, $extension_data, $context );
 
 		$class = $is_active ? 'active' : 'inactive';
 		$checkbox_id =  "checkbox_" . md5($extension_data['Name']);
@@ -257,6 +257,7 @@ class WP_Extension_List_Table extends WP_List_Table {
 		if ( $extension_file != $extension_data['Name'] )
 			$extension_name = $extension_data['Name'] . '<br/>' . $extension_name;
 
+		$description = '';
 		if ( $extension_data['Description'] )
 			$description .= '<p>' . $extension_data['Description'] . '</p>';
 

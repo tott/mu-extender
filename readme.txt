@@ -58,5 +58,10 @@ The feature priority is like this:
 1. Upload the entire `/mu-extender` directory and the mu-extender.php file to the `/wp-content/mu-plugins/` directory.
 
 == TODO ==
+
 - Clear / view other deactivation events for an extension
 - create extension config file dummies for newly added extensions
+
+== Note ==
+
+When enabling the USER_DEACTIVATION feature it is necessary that the extension is loaded after the user is set. Therefore these extensions will be loaded on the `set_current_user` action hook.
